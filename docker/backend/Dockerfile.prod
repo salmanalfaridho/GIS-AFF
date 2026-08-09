@@ -1,0 +1,36 @@
+# ============================================
+# Stage 1: Build Binary Golang (Builder)
+# ============================================
+FROM golang:1.21-alpine AS builder
+
+# Install dependencies yang diperlukan
+RUN apk add --no-cache git ca-certificates
+
+WORKDIR /app
+
+# Copy dependency files terlebih dahulu (caching layer)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy seluruh kode sumber
+COPY . .
+
+# Build binary statis (lebih ringan dan cepat)
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o affnet-backend .
+
+# ============================================
+# Stage 2: Final Image (Minimal, hanya binary)
+# ============================================
+FROM alpine:latest
+
+# Tambahkan CA certificates untuk HTTPS (koneksi ke Supabase/Zabbix Cloud)
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /root/
+
+# Copy hanya binary dari builder stage
+COPY --from=builder /app/affnet-backend .
+
+EXPOSE 8080
+
+CMD ["./affnet-backend"]

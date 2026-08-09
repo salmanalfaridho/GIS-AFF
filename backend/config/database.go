@@ -1,0 +1,68 @@
+package config
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"affnet-backend/models" // <--- Import folder models kita
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func ConnectDB() {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dbHost := os.Getenv("DB_HOST")
+		if dbHost != "" {
+			dbUser := os.Getenv("DB_USER")
+			dbPass := os.Getenv("DB_PASSWORD")
+			dbName := os.Getenv("DB_NAME")
+			dbPort := os.Getenv("DB_PORT")
+			if dbPort == "" {
+				dbPort = "5432"
+			}
+			dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta", dbHost, dbUser, dbPass, dbName, dbPort)
+		} else {
+			// Fallback ke konfigurasi lokal Docker
+			dsn = "host=db user=affnet_user password=affnet_secret dbname=affnet_db port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+		}
+	}
+
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Gagal terhubung ke PostgreSQL: ", err)
+	}
+
+	// AutoMigrate sekarang merujuk ke struktur yang BENAR di folder models
+	err = database.AutoMigrate(&models.Odp{}, &models.Onu{}, &models.User{}, &models.Log{}, &models.Infra{})
+	if err != nil {
+		log.Fatal("Gagal melakukan migrasi tabel: ", err)
+	}
+
+	DB = database
+	log.Println("🚀 Database PostgreSQL Berhasil Terhubung & Tabel ODP, ONU, User Siap!")
+
+	// --- SEEDER USER ADMIN DEFAULT ---
+	var count int64
+	DB.Model(&models.User{}).Count(&count)
+	
+	// Kalau tabel user masih kosong (count == 0), buatkan akun admin
+	if count == 0 {
+		admin := models.User{
+			Username: "admin",
+			Password: "rara2026", // Akan otomatis di-hash oleh fitur BeforeSave di model
+			Role:     "admin",
+		}
+		
+		if err := DB.Create(&admin).Error; err != nil {
+			log.Println("⚠️ Gagal menjalankan seeder admin:", err)
+		} else {
+			log.Println("✅ Seeder berhasil: Akun 'admin' (password: admin123) telah dibuat!")
+		}
+	}
+	
+}

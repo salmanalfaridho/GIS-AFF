@@ -1,0 +1,17 @@
+# Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Golang
+backend/main
+backend/bin/
+backend/tmp/
+
+# Environment (JANGAN commit credential ke Git!)
+.env
+**/.env
+*.env
+
+# Docker
+.docker/
