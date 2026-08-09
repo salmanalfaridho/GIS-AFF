@@ -6,6 +6,7 @@ import (
 	"affnet-backend/middlewares" // Import folder middleware kamu
 	"affnet-backend/services"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -95,6 +96,10 @@ func main() {
 		}
 	}()
 
-	// 7. Jalankan Server
-	r.Run("0.0.0.0:8080")
+	// 7. Jalankan Server - Baca PORT dari env var (wajib untuk Railway/Cloud)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run("0.0.0.0:" + port)
 }
