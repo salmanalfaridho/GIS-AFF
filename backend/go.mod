@@ -1,6 +1,6 @@
 module affnet-backend
 
-go 1.21
+go 1.25.0
 
 require (
 	github.com/gin-contrib/cors v1.7.7

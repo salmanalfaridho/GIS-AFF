@@ -9,6 +9,7 @@ import Logs from '@/pages/logs/Logs';
 import MapPage from '@/pages/map/MapPage';
 import Odp from '@/pages/odp/Odp';
 import Onu from '@/pages/onu/Onu';
+import MikroTikPage from '@/pages/mikrotik/MikroTik';
 import TestPanel from '@/pages/test/TestPanel';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/odp" element={<Odp />} />
           <Route path="/onu" element={<Onu />} />
+          <Route path="/mikrotik" element={<MikroTikPage />} />
           <Route path="/test-panel" element={<TestPanel />} />
         </Route>
       </Routes>

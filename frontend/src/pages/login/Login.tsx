@@ -6,7 +6,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Login | AFF NET GIS";
+    document.title = "Login | AFF DATA SOLUSI";
   }, []);
 
   const [username, setUsername] = useState('');
@@ -48,14 +48,14 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={styles.card}>
 
-        {/* Brand */}
+        {/* Brand Header */}
         <div className={styles.brand}>
           <img
             src="/logoicon.png"
-            alt="Logo AFF NET"
+            alt="Logo AFF DATA SOLUSI"
             style={{ width: '40px', height: '40px', objectFit: 'contain' }}
           />
-          <div className={styles.brandName}>AFF NET</div>
+          <div className={styles.brandName}>AFF DATA SOLUSI</div>
           <div className={styles.brandSub}>GIS Platform · NOC Dashboard</div>
         </div>
 

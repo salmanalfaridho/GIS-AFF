@@ -91,8 +91,9 @@ interface TableProps {
   onFilterType: (t: 'ALL' | 'ODP' | 'ODC') => void;
   onEdit: (odp: Odp) => void;
   onDelete: (id: number) => void;
+  onOpenPortGrid: (odp: Odp) => void;
 }
-export function OdpTable({ odps, filterType, onFilterType, onEdit, onDelete }: TableProps) {
+export function OdpTable({ odps, filterType, onFilterType, onEdit, onDelete, onOpenPortGrid }: TableProps) {
   const filtered = filterType === 'ALL' ? odps : odps.filter(o => o.type === filterType);
 
   return (
@@ -172,6 +173,14 @@ export function OdpTable({ odps, filterType, onFilterType, onEdit, onDelete }: T
                     </span>
                   </td>
                   <td>
+                    <button
+                      className={styles.editBtn}
+                      style={{ background: '#0284c7', color: '#fff', border: 'none', marginRight: 6 }}
+                      onClick={() => onOpenPortGrid(odp)}
+                      title="Lihat & Kelola Denah Port ODP"
+                    >
+                      🔌 Denah Port
+                    </button>
                     <button className={styles.editBtn} onClick={() => onEdit(odp)}>✏️ Edit</button>
                     <button className={styles.delBtn}  onClick={() => onDelete(odp.id)}>🗑</button>
                   </td>
@@ -197,6 +206,7 @@ interface ModalProps {
   onMapClick: (lat: number, lng: number) => void;
 }
 export function OdpModal({ editId, form, setForm, existingOdps, isLoading, onClose, onSubmit, onMapClick }: ModalProps) {
+  const [mapMode, setMapMode] = useState<'satellite' | 'osm'>('satellite');
   const odcList  = existingOdps.filter(o => o.type === 'ODC');
   const typeLabel = form.type === 'ODC' ? 'ODC' : 'ODP';
   const canSubmit = !isLoading && !!form.name && !!form.latitude && !!form.longitude;
@@ -295,12 +305,59 @@ export function OdpModal({ editId, form, setForm, existingOdps, isLoading, onClo
           {/* Map */}
           <div className={styles.mapSide}>
             <div className={styles.mapLabel}>🖱️ Klik peta · marker ungu = ODC · hitam = ODP</div>
+            
+            {/* Map Mode Switcher */}
+            <div style={{
+              position: 'absolute', top: 12, right: 12, zIndex: 1000,
+              display: 'flex', gap: 4, background: 'rgba(255,255,255,0.92)',
+              padding: 4, borderRadius: 8, boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              border: '1px solid #cbd5e1', backdropFilter: 'blur(4px)'
+            }}>
+              <button
+                type="button"
+                onClick={() => setMapMode('satellite')}
+                style={{
+                  padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer',
+                  background: mapMode === 'satellite' ? '#2563eb' : 'transparent',
+                  color: mapMode === 'satellite' ? '#fff' : '#4b5563',
+                  transition: 'all 0.15s'
+                }}
+              >
+                🛰️ Satelit
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode('osm')}
+                style={{
+                  padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: 'none', cursor: 'pointer',
+                  background: mapMode === 'osm' ? '#2563eb' : 'transparent',
+                  color: mapMode === 'osm' ? '#fff' : '#4b5563',
+                  transition: 'all 0.15s'
+                }}
+              >
+                🗺️ Standar
+              </button>
+            </div>
+
             <MapContainer
               center={center}
               zoom={15}
               style={{ width: '100%', height: '100%', zIndex: 0 }}
             >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {mapMode === 'satellite' ? (
+                <TileLayer
+                  key="satellite"
+                  url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                  attribution="&copy; Google Maps"
+                  maxZoom={20}
+                />
+              ) : (
+                <TileLayer
+                  key="osm"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap"
+                />
+              )}
               <MapClickHandler onPick={onMapClick} />
 
               {/* Marker form (biru) */}

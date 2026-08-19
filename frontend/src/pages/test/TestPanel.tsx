@@ -5,7 +5,7 @@ export default function TestPanel() {
   const [macInput, setMacInput] = useState<string>("44:22:95:49:71:68");
 
   useEffect(() => {
-    document.title = "Test Panel | AFF NET GIS";
+    document.title = "Test Panel | AFF DATA SOLUSI";
   }, []);
 
   const handleTest = async (scenarioId: number) => {
@@ -28,7 +28,7 @@ export default function TestPanel() {
       <Link to="/dashboard" style={{ color: '#aaa', textDecoration: 'none', marginBottom: '20px', display: 'inline-block' }}>
         ← Kembali ke Dashboard
       </Link>
-      
+
       <h1 style={{ marginBottom: '10px' }}>🛠️ Halaman Testing Skenario ONU</h1>
       <p style={{ color: '#aaa', marginBottom: '20px' }}>
         Halaman ini tersembunyi dari Navbar. Gunakan tombol di bawah ini untuk mensimulasikan ONU mati.
@@ -36,8 +36,8 @@ export default function TestPanel() {
 
       <div style={{ marginBottom: '30px', background: '#1e1e1e', padding: '15px', borderRadius: '8px', border: '1px solid #333' }}>
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Target MAC Address:</label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={macInput}
           onChange={(e) => setMacInput(e.target.value)}
           placeholder="Contoh: 44:22:95:49:71:68"
@@ -46,7 +46,7 @@ export default function TestPanel() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
-        <button 
+        <button
           onClick={() => handleTest(1)}
           style={{ padding: '16px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', textAlign: 'left' }}
         >

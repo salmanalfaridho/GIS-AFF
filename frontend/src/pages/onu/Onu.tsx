@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import { Onu, Odp, OnuForm, FilterMode, OnuTable, OnuModal } from './components';
 import styles from './onu.module.css';
@@ -13,11 +12,14 @@ export default function OnuPage() {
   const [selectedOnu, setSelectedOnu] = useState<Onu | null>(null);
   const [form, setForm] = useState<OnuForm>({ customer: '', latitude: '', longitude: '', odp_id: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // ── Fetch ──────────────────────────────────────────────────
   const refresh = useCallback(async () => {
-    const [onuRes, odpRes] = await Promise.all([fetch(ONU_URL), fetch(ODP_URL)]);
+    const opts = { credentials: 'include' as RequestCredentials };
+    const [onuRes, odpRes] = await Promise.all([fetch(ONU_URL, opts), fetch(ODP_URL, opts)]);
     const onuData = await onuRes.json();
     const odpData = await odpRes.json();
     const rawOnus = Array.isArray(onuData) ? onuData : (onuData.result || []);
@@ -40,7 +42,7 @@ export default function OnuPage() {
 
 
   useEffect(() => {
-    document.title = "ONU | AFF NET GIS";
+    document.title = "ONU | AFF DATA SOLUSI";
   }, []);
 
 
@@ -52,17 +54,42 @@ export default function OnuPage() {
       latitude: onu.latitude || '',
       longitude: onu.longitude || '',
       odp_id: onu.odp_id ? onu.odp_id.toString() : '',
+      port_number: onu.port_number ? onu.port_number.toString() : '',
     });
   };
 
   const closeModal = () => { setSelectedOnu(null); };
 
+  // ── Import dari MikroTik ───────────────────────────────────
+  const handleMikrotikImport = async () => {
+    setIsImporting(true);
+    setImportMsg(null);
+    try {
+      const res = await fetch('/api/mikrotik-import', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportMsg(`✅ Berhasil: ${data.created} ONU baru, ${data.updated} diperbarui`);
+        await refresh();
+      } else {
+        setImportMsg(`❌ Gagal: ${data.error || data.detail || 'Terjadi kesalahan'}`);
+      }
+    } catch (e) {
+      setImportMsg('❌ Tidak dapat menghubungi server');
+    } finally {
+      setIsImporting(false);
+      setTimeout(() => setImportMsg(null), 5000);
+    }
+  };
+
   const handleOdpChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     const odp = odps.find(o => o.id.toString() === id);
     setForm(f => odp
-      ? { ...f, odp_id: id, latitude: odp.latitude, longitude: odp.longitude }
-      : { ...f, odp_id: '' }
+      ? { ...f, odp_id: id, latitude: odp.latitude, longitude: odp.longitude, port_number: f.odp_id === id ? f.port_number : '' }
+      : { ...f, odp_id: '', port_number: '' }
     );
   };
 
@@ -70,7 +97,11 @@ export default function OnuPage() {
     e.preventDefault();
     if (!selectedOnu) return;
     setIsLoading(true);
-    const payload = { ...form, odp_id: form.odp_id ? parseInt(form.odp_id) : null };
+    const payload = {
+      ...form,
+      odp_id: form.odp_id ? parseInt(form.odp_id) : null,
+      port_number: form.port_number ? parseInt(form.port_number) : null,
+    };
     const res = await fetch(`${ONU_URL}/${selectedOnu.mac_address}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -111,6 +142,71 @@ export default function OnuPage() {
             </div>
           </div>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={async () => {
+                setIsImporting(true);
+                setImportMsg('');
+                try {
+                  const token = localStorage.getItem('auth_token') || '';
+                  const res = await fetch('/api/hioso-sync', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setImportMsg(`✅ ${data.message || 'Sync Redaman OLT HIOSO Selesai'} (${data.updated || 0} ONU diupdate)`);
+                    await refresh();
+                  } else {
+                    setImportMsg(`⚠️ ${data.error || 'Gagal terhubung ke OLT HIOSO'}`);
+                  }
+                } catch (err: any) {
+                  setImportMsg(`⚠️ Error: ${err.message}`);
+                } finally {
+                  setIsImporting(false);
+                }
+              }}
+              disabled={isImporting}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px',
+                fontWeight: 700, fontSize: 12, cursor: isImporting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)', transition: 'all 0.2s',
+              }}
+              title="Tarik Redaman Sinyal Asli dari Remote OLT HIOSO HA7302CST (fahrizal.ddns.net:9595)"
+            >
+              <span>📡</span> Sync Redaman OLT HIOSO
+            </button>
+
+            <button
+              onClick={handleMikrotikImport}
+              disabled={isImporting}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: isImporting ? '#94a3b8' : 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+                color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px',
+                fontWeight: 700, fontSize: 12, cursor: isImporting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 8px rgba(37,99,235,0.25)', transition: 'all 0.2s',
+              }}
+            >
+              <span>{isImporting ? '⏳' : '📡'}</span>
+              {isImporting ? 'Mengambil data...' : 'Import dari MikroTik'}
+            </button>
+          </div>
+          {importMsg && (
+            <div style={{
+              fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 8,
+              background: importMsg.startsWith('✅') ? '#f0fdf4' : '#fff1f2',
+              color: importMsg.startsWith('✅') ? '#16a34a' : '#dc2626',
+              border: `1px solid ${importMsg.startsWith('✅') ? '#bbf7d0' : '#fecaca'}`,
+            }}>
+              {importMsg}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -132,13 +228,14 @@ export default function OnuPage() {
       {/* Table + Filter */}
       <OnuTable
         onus={filtered}
+        odps={odps}
         filterMode={filterMode}
         onFilterChange={setFilterMode}
         totalCount={onus.length}
         onEdit={openEdit}
       />
 
-      {/* Modal */}
+      {/* Modal Edit */}
       {selectedOnu && (
         <OnuModal
           onu={selectedOnu}

@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"net/http"
+
 	"affnet-backend/config"
 	"affnet-backend/models"
 	"affnet-backend/services"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,10 +18,12 @@ func UpdateOnuDetails(c *gin.Context) {
 	macAddress := c.Param("mac") // Kita ambil MAC dari URL parameter
 
 	var input struct {
-		Customer  string `json:"customer"`
-		Latitude  string `json:"latitude"`
-		Longitude string `json:"longitude"`
-		OdpID     *uint  `json:"odp_id"`
+		Customer     string `json:"customer"`
+		Latitude     string `json:"latitude"`
+		Longitude    string `json:"longitude"`
+		OdpID        *uint  `json:"odp_id"`
+		PortNumber   *int   `json:"port_number"`
+		PathGeometry string `json:"path_geometry"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -37,10 +40,12 @@ func UpdateOnuDetails(c *gin.Context) {
 
 	// PERBAIKAN: Gunakan map[string]interface{} agar nilai kosong ("") tetap bisa di-save
 	updateData := map[string]interface{}{
-		"customer":  input.Customer,
-		"latitude":  input.Latitude,
-		"longitude": input.Longitude,
-		"odp_id":    input.OdpID,
+		"customer":      input.Customer,
+		"latitude":      input.Latitude,
+		"longitude":     input.Longitude,
+		"odp_id":        input.OdpID,
+		"port_number":   input.PortNumber,
+		"path_geometry": input.PathGeometry,
 	}
 
 	if err := config.DB.Model(&existingOnu).Updates(updateData).Error; err != nil {
@@ -65,13 +70,12 @@ func UpdateOnuDetails(c *gin.Context) {
 // =====================================================================
 func GetAllOnu(c *gin.Context) {
 	var onus []models.Onu
-	
-	// PERBAIKAN: Tambahkan Order by ID biar urutan di tabel React nggak lompat-lompat pas auto-refresh
+
 	if err := config.DB.Order("id asc").Find(&onus).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data ONU"})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, onus)
 }
 

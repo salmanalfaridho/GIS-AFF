@@ -11,6 +11,10 @@ export interface Onu {
   status?: string;
   updated_at?: string;
   odp_id?: number | null;
+  port_number?: number | null;
+  upload_speed?: string;
+  download_speed?: string;
+  path_geometry?: string;
 }
 export interface Odp {
   id: number;
@@ -21,6 +25,7 @@ export interface Odp {
   total_port: number;
   odc_id: number | null;
   onus?: any[];
+  path_geometry?: string;
 }
 export interface Infra {
   hostid: string;

@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   useEffect(() => {
 
-    document.title = "Dashboard | AFF NET GIS";
+    document.title = "Dashboard | AFF DATA SOLUSI";
 
     // ✅ UBAH KETIGA FETCH MENJADI RELATIVE PATH:
     Promise.all([
@@ -61,10 +61,18 @@ export default function Dashboard() {
   const isMikrotikDown = mikrotik?.interfaces?.some(i => i.available === '2') || false;
 
   // ── ONU ───────────────────────────────────────────────────
+  const getRxCategory = (o: Onu) => {
+    const isDisconnected = o.status === "Koneksi terputus" || o.status === "Terputus" || o.status === "Down" || o.status === "Offline" || o.rx_power === "N/A" || o.rx_power === "0" || o.rx_power === "" || !o.rx_power;
+    const rx = parseFloat(o.rx_power);
+    if (isDisconnected || isNaN(rx) || rx <= -26.0) return 'critical';
+    if (rx <= -25.0) return 'warning';
+    return 'safe';
+  };
+
   const totalOnu = onus.length;
-  const criticalOnu = onus.filter(o => parseFloat(o.rx_power) <= -27).length;
-  const warningOnu = onus.filter(o => parseFloat(o.rx_power) <= -25 && parseFloat(o.rx_power) > -27).length;
-  const safeOnu = totalOnu - criticalOnu - warningOnu;
+  const criticalOnu = onus.filter(o => getRxCategory(o) === 'critical').length;
+  const warningOnu = onus.filter(o => getRxCategory(o) === 'warning').length;
+  const safeOnu = onus.filter(o => getRxCategory(o) === 'safe').length;
 
   // ── ODC ───────────────────────────────────────────────────
   const totalOdc = odcs.length;
@@ -99,7 +107,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>AFF NET · FTTH</p>
+          <p className={styles.eyebrow}>AFF DATA SOLUSI · FTTH</p>
           <h1 className={styles.title}>Network Overview</h1>
         </div>
       </header>
@@ -108,10 +116,37 @@ export default function Dashboard() {
 
       {/* Cards */}
       <div className={styles.grid}>
-        <CoreStatusCard isOltDown={isOltDown} isMikrotikDown={isMikrotikDown} infraUnreachable={infraError} />
-        <OdcStatusCard totalOdc={totalOdc} fullOdcs={fullOdcs} avgOdcUsage={avgOdcUsage} />
-        <OdpCapacityCard totalOdp={totalOdp} totalPorts={totalPorts} usedPorts={usedPorts} freePorts={freePorts} usagePercent={usagePercent} />
-        <OnuHealthCard totalOnu={totalOnu} safeOnu={safeOnu} warningOnu={warningOnu} criticalOnu={criticalOnu} />
+        <CoreStatusCard
+          isOltDown={isOltDown}
+          isMikrotikDown={isMikrotikDown}
+          infraUnreachable={infraError}
+          infras={infras}
+        />
+        <OdcStatusCard
+          totalOdc={totalOdc}
+          fullOdcs={fullOdcs}
+          avgOdcUsage={avgOdcUsage}
+          odcs={odcs}
+          odps={odps}
+        />
+        <OdpCapacityCard
+          totalOdp={totalOdp}
+          totalPorts={totalPorts}
+          usedPorts={usedPorts}
+          freePorts={freePorts}
+          usagePercent={usagePercent}
+          odps={odps}
+          odcs={odcs}
+          onus={onus}
+        />
+        <OnuHealthCard
+          totalOnu={totalOnu}
+          safeOnu={safeOnu}
+          warningOnu={warningOnu}
+          criticalOnu={criticalOnu}
+          onus={onus}
+          odps={odps}
+        />
       </div>
 
 

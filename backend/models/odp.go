@@ -7,6 +7,7 @@ type Odp struct {
 	Latitude  string `json:"latitude"`
 	Longitude string `json:"longitude"`
 	TotalPort int    `json:"total_port"`
+	PathGeometry string `json:"path_geometry"` // JSON string dari array koordinat waypoints [[lat,lon],...]
 
 	// Relasi: ODP terhubung ke ODC (nullable — ODC tidak punya parent)
 	OdcID *uint `json:"odc_id"`

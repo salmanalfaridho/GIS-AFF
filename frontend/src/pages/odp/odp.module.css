@@ -41,16 +41,35 @@
 .red   { color: var(--red)   !important; }
 .amber { color: var(--amber) !important; }
 
-/* ── TOOLBAR ──────────────────────────── */
 .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .sectionTitle { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
-.createBtn {
+.createBtn, .addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 20px;
-  background: var(--blue); color: white; border: none; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 700; font-family: var(--font); cursor: pointer;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.25); transition: all 0.15s;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  transition: all 0.15s ease;
+  letter-spacing: 0.3px;
 }
-.createBtn:hover { background: #1d4ed8; transform: translateY(-1px); }
+.createBtn:hover, .addBtn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+.addBtn span {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+}
 
 /* ── FILTER BAR ───────────────────────── */
 .filterBar {

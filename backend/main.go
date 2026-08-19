@@ -28,6 +28,9 @@ func main() {
 		// --- RUTE PUBLIK (Bisa diakses siapa saja, misal untuk Login) ---
 		api.POST("/login", controllers.Login)
 		api.POST("/logout", controllers.Logout)
+		api.POST("/hioso-sync", controllers.SyncHiosoOltRedaman)
+		api.GET("/hioso-sync", controllers.SyncHiosoOltRedaman)
+		api.GET("/hioso-probe", controllers.ProbeHiosoOlt)
 
 		// --- RUTE TERPROTEKSI (Wajib melewati AuthMiddleware/JWT) ---
 		protected := api.Group("/")
@@ -57,25 +60,37 @@ func main() {
 
 			protected.GET("/test-notif", controllers.TestBulkTelegram)
 			protected.GET("/pppoe-active", controllers.GetPPPoEActive)
+			protected.GET("/pppoe-summary", controllers.GetPPPoESummary)
+			protected.GET("/mikrotik-status", controllers.GetMikroTikStatus)
+			protected.POST("/mikrotik-import", controllers.ImportOnuFromMikroTik)
+			protected.GET("/onu-redaman/:mac", controllers.GetOnuRedamanRealtime)
 			protected.POST("/test-onu-scenario", controllers.TestOnuScenario)
 		}
 	}
 
-	// 5. Jalankan Background Cron Job untuk Auto-Sync Zabbix
+	// 5. Jalankan Background Cron Job untuk Auto-Sync Zabbix, MikroTik & HIOSO OLT
 	go func() {
-		// Sync setiap 2 menit (bisa diubah sesuai kebutuhan)
-		ticker := time.NewTicker(5 * time.Minute)
-		for range ticker.C {
-			fmt.Println("[CRON] Menjalankan auto-sync Zabbix & MikroTik...")
+		// Jalankan sekali saat startup
+		if count, err := controllers.ExecuteHiosoSyncDirect(); err == nil {
+			fmt.Printf("[CRON STARTUP] Sync HIOSO OLT: %d ONU berhasil disinkronkan langsung dari OLT!\n", count)
+		}
 
+		// Sync setiap 2 menit
+		ticker := time.NewTicker(2 * time.Minute)
+		for range ticker.C {
+			fmt.Println("[CRON] Menjalankan auto-sync OLT HIOSO, Zabbix & MikroTik...")
+
+			// 1. Sync OLT HIOSO (Ambil redaman fisik real OLT)
+			if count, err := controllers.ExecuteHiosoSyncDirect(); err != nil {
+				fmt.Printf("[CRON ERROR] Gagal sync OLT HIOSO: %v\n", err)
+			} else {
+				fmt.Printf("[CRON] Sync OLT HIOSO: %d ONU berhasil disinkronkan.\n", count)
+			}
+
+			// 2. Sync Zabbix Infra
 			_, errInfra := controllers.FetchAndProcessZabbixInfra()
 			if errInfra != nil {
 				fmt.Printf("[CRON ERROR] Gagal sync Infra: %v\n", errInfra)
-			}
-
-			_, errOnu := controllers.FetchAndProcessOnuSync()
-			if errOnu != nil {
-				fmt.Printf("[CRON ERROR] Gagal sync ONU: %v\n", errOnu)
 			}
 
 			fmt.Println("[CRON] Auto-sync selesai.")

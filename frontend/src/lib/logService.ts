@@ -3,7 +3,7 @@ const BASE = '/api';
 const OPTS = { credentials: 'include' as RequestCredentials };
 
 export type LogSeverity = 'critical' | 'warning' | 'info';
-export type LogSource   = 'ONU' | 'ODP' | 'Infra' | 'System';
+export type LogSource   = 'ONU' | 'ODP' | 'ODC' | 'MikroTik' | 'Infra' | 'System';
 
 export interface LogEntry {
   id: number;

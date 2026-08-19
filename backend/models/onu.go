@@ -10,7 +10,9 @@ type Onu struct {
 	Longitude  string    `json:"longitude"` // Awalnya kosong
 	RxPower    string    `json:"rx_power"`  // Dari Zabbix
 	Status     string    `json:"status"`    // Up/Down dari Zabbix
-	OdpID      *uint     `json:"odp_id"`
+	OdpID        *uint     `json:"odp_id"`
+	PortNumber   *int      `json:"port_number"`   // Nomor Port ODP (1, 2, 3...)
+	PathGeometry string    `json:"path_geometry"` // JSON string dari array koordinat waypoints [[lat,lon],...]
 	
 	// Tambahan untuk tracking waktu (GORM akan handle ini otomatis)
 	CreatedAt  time.Time `json:"created_at"` // Catat kapan ONU pertama kali disedot dari Zabbix
