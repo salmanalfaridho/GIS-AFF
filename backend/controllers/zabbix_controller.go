@@ -20,15 +20,15 @@ import (
 // getZabbixConfig membaca konfigurasi Zabbix dari environment variable
 // Fallback ke zabbix-web (container Docker lokal) jika env tidak di-set
 func getZabbixConfig() (url, user, pass string) {
-	url = os.Getenv("ZABBIX_URL")
+	url = strings.TrimSpace(os.Getenv("ZABBIX_URL"))
 	if url == "" {
 		url = "http://zabbix-web:8080/api_jsonrpc.php"
 	}
-	user = os.Getenv("ZABBIX_USER")
+	user = strings.TrimSpace(os.Getenv("ZABBIX_USER"))
 	if user == "" {
 		user = "Admin"
 	}
-	pass = os.Getenv("ZABBIX_PASSWORD")
+	pass = strings.TrimSpace(os.Getenv("ZABBIX_PASSWORD"))
 	if pass == "" {
 		pass = "zabbix"
 	}
@@ -38,7 +38,7 @@ func getZabbixConfig() (url, user, pass string) {
 // ZabbixURL diekspos sebagai fungsi (bukan var) agar selalu membaca env terbaru
 // Ini mencegah bug di mana nilai terkunci saat package pertama kali di-load
 func getZabbixURL() string {
-	if v := os.Getenv("ZABBIX_URL"); v != "" {
+	if v := strings.TrimSpace(os.Getenv("ZABBIX_URL")); v != "" {
 		return v
 	}
 	return "http://zabbix-web:8080/api_jsonrpc.php"
