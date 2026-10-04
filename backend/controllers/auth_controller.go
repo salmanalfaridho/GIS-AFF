@@ -12,8 +12,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Kunci rahasia untuk enkripsi JWT (Sebaiknya nanti dipindah ke file .env)
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+func getJwtSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "affnet_super_secret_jwt_2024"
+	}
+	return []byte(secret)
+}
 
 // Struktur payload di dalam Token JWT
 type Claims struct {
@@ -72,7 +77,7 @@ func Login(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// 7. Kunci Token dengan secret key
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(getJwtSecret())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token JWT"})
 		return
@@ -86,6 +91,7 @@ func Login(c *gin.Context) {
 	// 9. Kirim response JSON sukses
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login berhasil",
+		"token":   tokenString,
 		"role":    user.Role, // Opsional: kirim role ke frontend buat ngatur menu
 	})
 }

@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -10,8 +11,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Ambil secret key dari env
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+func getJwtSecret() []byte {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "affnet_super_secret_jwt_2024"
+	}
+	return []byte(secret)
+}
 
 // =====================================================================
 // 1. CORS MIDDLEWARE
@@ -37,9 +43,16 @@ func CORSMiddleware() gin.HandlerFunc {
 // Pastikan nama fungsinya "AuthMiddleware" dengan huruf A besar
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Ambil token dari cookie
+		// Ambil token dari cookie atau Authorization Header
 		tokenString, err := c.Cookie("token")
-		if err != nil {
+		if err != nil || tokenString == "" {
+			authHeader := c.GetHeader("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Silakan login terlebih dahulu"})
 			c.Abort()
 			return
@@ -47,7 +60,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Parse token
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return getJwtSecret(), nil
 		})
 
 		// Cek validitas

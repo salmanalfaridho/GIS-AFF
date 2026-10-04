@@ -35,10 +35,10 @@ export default function LoginPage() {
         localStorage.setItem('auth_token', data.token || 'true');
         navigate('/dashboard');
       } else {
-        setError(data.error || 'Username atau password salah.');
+        setError(data.error || data.message || 'Username atau password salah.');
       }
     } catch {
-      setError('Gagal menghubungi server.');
+      setError('Gagal menghubungi server backend.');
     } finally {
       setIsLoading(false);
     }
