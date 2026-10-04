@@ -1,0 +1,226 @@
+package controllers
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"affnet-backend/config"
+	"affnet-backend/models"
+	"affnet-backend/services"
+
+	"github.com/gin-gonic/gin"
+)
+
+// getZabbixConfig membaca konfigurasi Zabbix dari environment variable
+// Fallback ke zabbix-web (container Docker lokal) jika env tidak di-set
+func getZabbixConfig() (url, user, pass string) {
+	url = os.Getenv("ZABBIX_URL")
+	if url == "" {
+		url = "http://zabbix-web:8080/api_jsonrpc.php"
+	}
+	user = os.Getenv("ZABBIX_USER")
+	if user == "" {
+		user = "Admin"
+	}
+	pass = os.Getenv("ZABBIX_PASSWORD")
+	if pass == "" {
+		pass = "zabbix"
+	}
+	return
+}
+
+// ZabbixURL diekspos sebagai fungsi (bukan var) agar selalu membaca env terbaru
+// Ini mencegah bug di mana nilai terkunci saat package pertama kali di-load
+func getZabbixURL() string {
+	if v := os.Getenv("ZABBIX_URL"); v != "" {
+		return v
+	}
+	return "http://zabbix-web:8080/api_jsonrpc.php"
+}
+
+// ZabbixURL sebagai alias untuk backward compatibility dengan onu_sync_controller
+var ZabbixURL = "" // Diisi dinamis via getZabbixURL()
+
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
+// Fungsi Helper untuk Login Otomatis ke Zabbix
+func getZabbixAuthToken() (string, error) {
+	zabbixURL, zabbixUser, zabbixPass := getZabbixConfig()
+	payload := models.ZabbixRequest{
+		Jsonrpc: "2.0",
+		Method:  "user.login",
+		Params:  map[string]string{"username": zabbixUser, "password": zabbixPass},
+		ID:      1,
+	}
+
+	jb, _ := json.Marshal(payload)
+	resp, err := httpClient.Post(zabbixURL, "application/json-rpc", bytes.NewBuffer(jb))
+	if err != nil {
+		return "", fmt.Errorf("tidak dapat menghubungi Zabbix (%s): %v", zabbixURL, err)
+	}
+	defer resp.Body.Close()
+
+	// Baca response sekali saja untuk bisa cek error dan token
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("gagal membaca response login Zabbix: %v", err)
+	}
+
+	// Decode response - cek error dari Zabbix (mis: password salah, service belum siap)
+	var zabbixResp struct {
+		Result string `json:"result"`
+		Error  *struct {
+			Code    int    `json:"code"`
+			Message string `json:"message"`
+			Data    string `json:"data"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &zabbixResp); err != nil {
+		return "", fmt.Errorf("gagal parse response Zabbix: %v", err)
+	}
+
+	// Jika Zabbix mengembalikan error (mis: login gagal)
+	if zabbixResp.Error != nil {
+		return "", fmt.Errorf("Zabbix auth error [%d]: %s - %s",
+			zabbixResp.Error.Code, zabbixResp.Error.Message, zabbixResp.Error.Data)
+	}
+
+	// Jika token kosong (Zabbix belum siap atau response tidak terduga)
+	if zabbixResp.Result == "" {
+		return "", fmt.Errorf("Zabbix mengembalikan token kosong (service mungkin belum siap). Response: %s", string(body))
+	}
+
+	return zabbixResp.Result, nil
+}
+
+// =====================================================================
+// 1. FETCH AND PROCESS ZABBIX INFRA
+// Menarik data dari Zabbix dan memproses log/database secara internal
+// =====================================================================
+func FetchAndProcessZabbixInfra() ([]byte, error) {
+	token, err := getZabbixAuthToken()
+	if err != nil {
+		return nil, fmt.Errorf("gagal login ke Zabbix: %v", err)
+	}
+
+	payload := models.ZabbixRequest{
+		Jsonrpc: "2.0",
+		Method:  "host.get",
+		Params:  map[string]interface{}{
+			"output":          "extend",
+			"monitored_hosts": true,
+			"selectInventory": []string{"location_lat", "location_lon", "location"},
+			"selectInterfaces": "extend",
+		},
+		Auth: token,
+		ID:   2,
+	}
+
+	jb, _ := json.Marshal(payload)
+	resp, err := httpClient.Post(getZabbixURL(), "application/json-rpc", bytes.NewBuffer(jb))
+	if err != nil {
+		return nil, fmt.Errorf("gagal menghubungi Zabbix: %v", err)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membaca response dari Zabbix: %v", err)
+	}
+
+	// Parsing response untuk ngecek status perangkat (Infra)
+	var zabbixRespStruct struct {
+		Result []struct {
+			Name       string `json:"name"`
+			Hostid     string `json:"hostid"`
+			Interfaces []struct {
+				Available string `json:"available"`
+			} `json:"interfaces"`
+			Inventory struct {
+				LocationLat string `json:"location_lat"`
+				LocationLon string `json:"location_lon"`
+				Location    string `json:"location"`
+			} `json:"inventory"`
+		} `json:"result"`
+	}
+	json.Unmarshal(bodyBytes, &zabbixRespStruct)
+
+	// Cek apakah ada yang down, jika ya catat log
+	for _, host := range zabbixRespStruct.Result {
+		isDown := false
+		for _, iface := range host.Interfaces {
+			if iface.Available == "2" {
+				isDown = true
+				break
+			}
+		}
+
+		nameLow := strings.ToLower(host.Name)
+		deviceType := "Server (" + host.Name + ")"
+		if strings.Contains(nameLow, "mikrotik") {
+			deviceType = "Router MikroTik"
+		} else if strings.Contains(nameLow, "olt") {
+			deviceType = "OLT HiOSO"
+		}
+
+		// Skenario 1 & 2: Cek status down/up
+		if isDown {
+			services.RecordLog("critical", "Infra", host.Name, deviceType+" tidak merespons / down")
+		} else {
+			services.ResolveLog(host.Name, "Infra")
+		}
+
+		// Skenario 3 & 4: Cek Infra (untuk auto-discovery dan perubahan lokasi)
+		var existingInfra models.Infra
+		result := config.DB.Where("host_id = ?", host.Hostid).First(&existingInfra)
+
+		lat := host.Inventory.LocationLat
+		lon := host.Inventory.LocationLon
+
+		if result.RowsAffected == 0 {
+			// Skenario 3: Perangkat baru ditemukan
+			config.DB.Create(&models.Infra{
+				HostID: host.Hostid,
+				Name:   host.Name,
+				Lat:    lat,
+				Lon:    lon,
+			})
+			msg := fmt.Sprintf("Perangkat %s baru terdeteksi via auto-discovery SNMP", deviceType)
+			services.RecordLog("info", "Infra", host.Name, msg)
+		} else {
+			// Skenario 4: Mengubah koordinat lokasi perangkat
+			if (existingInfra.Lat != lat || existingInfra.Lon != lon) && (lat != "" && lon != "") {
+				msg := fmt.Sprintf("Lokasi koordinat %s berubah (Lat: %s, Lon: %s)", deviceType, lat, lon)
+				services.RecordLog("info", "Infra", host.Name, msg)
+				
+				config.DB.Model(&existingInfra).Updates(map[string]interface{}{
+					"lat": lat,
+					"lon": lon,
+				})
+			}
+		}
+	}
+
+	return bodyBytes, nil
+}
+
+// =====================================================================
+// 2. GET ZABBIX INFRA (HTTP ENDPOINT)
+// Endpoint untuk mengambil Lokasi Mikrotik & OLT dari frontend
+// =====================================================================
+func GetZabbixInfra(c *gin.Context) {
+	bodyBytes, err := FetchAndProcessZabbixInfra()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Data(http.StatusOK, "application/json", bodyBytes)
+}

@@ -1,0 +1,197 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 28px;
+  height: 58px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Brand ────────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Jarak antara logo dan teks */
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  height: 40px;
+  /* Atur tinggi logo */
+  width: auto;
+  /* Biar lebarnya menyesuaikan (tidak gepeng) */
+  object-fit: contain;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brandName {
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+  /* Menghilangkan spacing berlebih */
+  margin-bottom: 2px;
+}
+
+.brandSub {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Menu Wrapper ──────────────────────── */
+.menu {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Links ────────────────────────────── */
+.links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.link:hover {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+.linkActive {
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-weight: 600;
+  border: 1px solid var(--blue-border);
+}
+
+.linkActive:hover {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.linkIcon {
+  font-size: 14px;
+}
+
+/* ── Right ────────────────────────────── */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.logoutBtn {
+  padding: 7px 14px;
+  background: var(--red-soft);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.logoutBtn:hover {
+  background: #fee2e2;
+}
+
+/* ── Mobile Toggle ────────────────────── */
+.mobileToggle {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+@media (max-width: 860px) {
+  .mobileToggle {
+    display: block;
+  }
+
+  .menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 58px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .menuOpen {
+    display: flex;
+  }
+
+  .links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .link {
+    justify-content: flex-start;
+  }
+
+  .right {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .separator {
+    display: none;
+  }
+
+  .logoutBtn {
+    width: 100%;
+  }
+}

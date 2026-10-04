@@ -1,0 +1,40 @@
+# ============================================
+# render.yaml - Konfigurasi Deploy ke Render.com
+# GIS-AFFNET Backend (Golang)
+# ============================================
+
+services:
+  - type: web
+    name: gis-affnet-backend
+    runtime: docker
+    # Path ke Dockerfile produksi backend
+    dockerfilePath: ./docker/backend/Dockerfile.prod
+    dockerContext: ./backend
+    plan: free
+    region: singapore
+
+    # Environment Variables
+    # PENTING: Nilai sensitif seperti DATABASE_URL dan JWT_SECRET
+    # sebaiknya diisi langsung di Dashboard Render (bukan di file ini)
+    # agar tidak ter-expose ke repository publik.
+    envVars:
+      - key: PORT
+        value: 8080
+
+      # --- Database Supabase ---
+      - key: DATABASE_URL
+        sync: false  # Akan diisi manual di Dashboard Render
+
+      # --- Zabbix Config ---
+      - key: ZABBIX_URL
+        sync: false  # Akan diisi manual saat Zabbix sudah deployed
+
+      - key: ZABBIX_USER
+        value: Admin
+
+      - key: ZABBIX_PASSWORD
+        sync: false  # Akan diisi manual di Dashboard Render
+
+      # --- JWT Secret ---
+      - key: JWT_SECRET
+        sync: false  # Akan diisi manual di Dashboard Render

@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: affnet_db
+    restart: always
+    environment:
+      # Mengambil nilai dari file .env
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT_EXTERNAL:-5432}:5432"
+    volumes:
+      - affnet_pgdata:/var/lib/postgresql/data
+
+  # Backend Golang
+  # Backend Golang
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
+    container_name: affnet_backend
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./backend:/app
+    # Ganti blok 'environment:' yang lama dengan 'env_file:' ini:
+    env_file:
+      - ./backend/.env
+    # Izinkan backend mengakses service di host machine (Zabbix lokal)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - default
+      - zabbix_net
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+    container_name: affnet_frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      # Panggil API melalui Nginx (port 80), bukan langsung ke backend
+      - VITE_API_URL=http://localhost/api
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: affnet_nginx
+    restart: always
+    ports:
+      - "8888:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend
+
+  # Zabbix Dedicated Database
+  zabbix-db:
+    image: postgres:15-alpine
+    container_name: zabbix_db
+    restart: always
+    environment:
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      POSTGRES_DB: zabbix
+    volumes:
+      - zabbix_pgdata:/var/lib/postgresql/data
+
+  # Zabbix Server
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:alpine-6.4-latest
+    container_name: zabbix_server
+    restart: always
+    ports:
+      - "10051:10051"
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      POSTGRES_DB: zabbix
+    depends_on:
+      - zabbix-db
+
+  # Zabbix Web UI
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-6.4-latest
+    container_name: zabbix_web
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      DB_SERVER_HOST: zabbix-db
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      POSTGRES_DB: zabbix
+      PHP_TZ: Asia/Jakarta
+    depends_on:
+      - zabbix-db
+      - zabbix-server
+
+volumes:
+  affnet_pgdata:
+  frontend_node_modules:
+  zabbix_pgdata:
+
+networks:
+  zabbix_net:
+    external: true
+    name: belajar-zabbix_default
