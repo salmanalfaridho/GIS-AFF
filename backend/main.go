@@ -23,9 +23,24 @@ func main() {
 	r.Use(middlewares.CORSMiddleware())
 
 	// 4. API Route Grouping
+	r.GET("/health", func(c *gin.Context) {
+		dbStatus := "connected"
+		if config.DB == nil {
+			dbStatus = "disconnected"
+		}
+		c.JSON(200, gin.H{"status": "ok", "database": dbStatus})
+	})
+
 	api := r.Group("/api")
 	{
 		// --- RUTE PUBLIK (Bisa diakses siapa saja, misal untuk Login) ---
+		api.GET("/health", func(c *gin.Context) {
+			dbStatus := "connected"
+			if config.DB == nil {
+				dbStatus = "disconnected"
+			}
+			c.JSON(200, gin.H{"status": "ok", "database": dbStatus})
+		})
 		api.POST("/login", controllers.Login)
 		api.POST("/logout", controllers.Logout)
 		api.POST("/hioso-sync", controllers.SyncHiosoOltRedaman)

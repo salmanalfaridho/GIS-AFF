@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"affnet-backend/models" // <--- Import folder models kita
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -32,15 +34,42 @@ func ConnectDB() {
 		}
 	}
 
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	log.Println("🔌 Menghubungkan ke database PostgreSQL...")
+
+	var database *gorm.DB
+	var err error
+
+	for attempts := 1; attempts <= 5; attempts++ {
+		database, err = gorm.Open(postgres.New(postgres.Config{
+			DSN:                  dsn,
+			PreferSimpleProtocol: true, // Wajib untuk Supabase PgBouncer Pooler (port 6543)
+		}), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Warn),
+		})
+
+		if err == nil {
+			sqlDB, errPing := database.DB()
+			if errPing == nil {
+				if errPing = sqlDB.Ping(); errPing == nil {
+					break
+				}
+			}
+			err = errPing
+		}
+
+		log.Printf("⚠️ Percobaan koneksi database ke-%d gagal: %v. Mencoba lagi...\n", attempts, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
-		log.Fatal("Gagal terhubung ke PostgreSQL: ", err)
+		log.Printf("❌ Gagal terhubung ke PostgreSQL: %v\n", err)
+		return
 	}
 
 	// AutoMigrate sekarang merujuk ke struktur yang BENAR di folder models
 	err = database.AutoMigrate(&models.Odp{}, &models.Onu{}, &models.User{}, &models.Log{}, &models.Infra{})
 	if err != nil {
-		log.Fatal("Gagal melakukan migrasi tabel: ", err)
+		log.Printf("⚠️ Peringatan migrasi tabel: %v\n", err)
 	}
 
 	DB = database
@@ -64,5 +93,4 @@ func ConnectDB() {
 			log.Println("✅ Seeder berhasil: Akun 'admin' (password: affdata2024) telah dibuat!")
 		}
 	}
-	
 }
