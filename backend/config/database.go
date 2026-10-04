@@ -44,7 +44,9 @@ func ConnectDB() {
 			DSN:                  dsn,
 			PreferSimpleProtocol: true, // Wajib untuk Supabase PgBouncer Pooler (port 6543)
 		}), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Warn),
+			PrepareStmt:            false,
+			SkipDefaultTransaction: true,
+			Logger:                 logger.Default.LogMode(logger.Warn),
 		})
 
 		if err == nil {
