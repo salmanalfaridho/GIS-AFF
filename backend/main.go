@@ -41,6 +41,30 @@ func main() {
 			}
 			c.JSON(200, gin.H{"status": "ok", "database": dbStatus})
 		})
+		api.GET("/seed-admin", func(c *gin.Context) {
+			if config.DB == nil {
+				c.JSON(500, gin.H{"error": "Database tidak terhubung"})
+				return
+			}
+			var user models.User
+			err := config.DB.Where("username = ?", "admin").First(&user).Error
+			if err != nil {
+				admin := models.User{
+					Username: "admin",
+					Password: "affdata2024",
+					Role:     "admin",
+				}
+				if err := config.DB.Create(&admin).Error; err != nil {
+					c.JSON(500, gin.H{"error": err.Error()})
+					return
+				}
+				c.JSON(200, gin.H{"message": "Akun admin berhasil dibuat!", "username": "admin", "password": "affdata2024"})
+				return
+			}
+			user.Password = "affdata2024"
+			config.DB.Save(&user)
+			c.JSON(200, gin.H{"message": "Akun admin sudah ada dan password telah di-reset ke affdata2024!", "username": "admin"})
+		})
 		api.POST("/login", controllers.Login)
 		api.POST("/logout", controllers.Logout)
 		api.POST("/hioso-sync", controllers.SyncHiosoOltRedaman)
