@@ -15,9 +15,9 @@ import (
 
 // connectMikroTik membuat koneksi ke MikroTik RouterOS API dengan timeout
 func connectMikroTik() (*routeros.Client, error) {
-	mkIp := os.Getenv("MIKROTIK_IP")
-	mkUser := os.Getenv("MIKROTIK_USER")
-	mkPass := os.Getenv("MIKROTIK_PASS")
+	mkIp := strings.TrimSpace(os.Getenv("MIKROTIK_IP"))
+	mkUser := strings.TrimSpace(os.Getenv("MIKROTIK_USER"))
+	mkPass := strings.TrimSpace(os.Getenv("MIKROTIK_PASS"))
 	return routeros.DialTimeout(mkIp, mkUser, mkPass, 10*time.Second)
 }
 
