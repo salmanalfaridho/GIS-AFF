@@ -577,40 +577,7 @@ export default function MapView() {
                 </div>
               </div>
 
-              {/* Layer Checkboxes */}
-              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280' }}>LAYER JARINGAN:</div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showBackbone} onChange={e => setShowBackbone(e.target.checked)} />
-                  <span>Kabel Backbone (Core)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showTrunk} onChange={e => setShowTrunk(e.target.checked)} />
-                  <span>Kabel Trunk (OLT-ODC)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showDistribution} onChange={e => setShowDistribution(e.target.checked)} />
-                  <span style={{ display: 'inline-block', width: 14, height: 4, background: '#0284c7', borderRadius: 2 }}></span>
-                  <span>Kabel Distribusi (ODC-ODP)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showDropLines} onChange={e => setShowDropLines(e.target.checked)} />
-                  <span style={{ display: 'inline-block', width: 14, height: 2, borderTop: '2px dashed #16a34a' }}></span>
-                  <span>Kabel Drop (ODP-Pelanggan)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showOdcMarkers} onChange={e => setShowOdcMarkers(e.target.checked)} />
-                  <span>Marker ODC</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showOdpMarkers} onChange={e => setShowOdpMarkers(e.target.checked)} />
-                  <span>Marker ODP</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: '#374151' }}>
-                  <input type="checkbox" checked={showOnuMarkers} onChange={e => setShowOnuMarkers(e.target.checked)} />
-                  <span>Marker ONU</span>
-                </label>
-              </div>
+
             </div>
           )}
         </div>
