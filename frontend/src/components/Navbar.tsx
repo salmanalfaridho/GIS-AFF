@@ -38,8 +38,7 @@ export default function Navbar() {
       {/* Brand */}
       <div className={styles.brand}>
         <div className={styles.brandIcon}>
-          {/* PERBAIKAN: Path diawali '/' dan tambahkan styling agar tidak luber */}
-          <img src="/logoonly.png" alt="AFF DATA SOLUSI Logo" className={styles.logoImg} />
+          <img src="/logo-AFF.jpeg" alt="AFF DATA SOLUSI Logo" className={styles.logoImg} />
         </div>
         <div className={styles.brandText}>
           <div className={styles.brandName}>AFF DATA SOLUSI</div>

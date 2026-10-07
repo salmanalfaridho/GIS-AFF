@@ -121,7 +121,16 @@ docker compose up -d zabbix-db zabbix-server zabbix-web
 
 ---
 
-### Langkah 2: Jalankan Cloudflare Tunnel Secara Manual
+### Langkah 2: Jalankan Cloudflare Tunnel
+
+**Opsi A (Otomatis via Script PowerShell):**
+Cukup jalankan script yang sudah disediakan:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-zabbix-tunnel.ps1
+```
+*Script ini akan otomatis mengecek Docker, menyalakan container Zabbix, membuat tunnel, dan menyalin URL Zabbix API ke clipboard Anda.*
+
+**Opsi B (Manual):**
 Jalankan perintah ini di PowerShell / CMD:
 
 ```powershell

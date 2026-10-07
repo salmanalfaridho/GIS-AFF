@@ -51,9 +51,9 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className={styles.brand}>
           <img
-            src="/logoicon.png"
+            src="/logo-AFF.jpeg"
             alt="Logo AFF DATA SOLUSI"
-            style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+            style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px' }}
           />
           <div className={styles.brandName}>AFF DATA SOLUSI</div>
           <div className={styles.brandSub}>GIS Platform · NOC Dashboard</div>

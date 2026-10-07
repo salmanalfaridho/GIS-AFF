@@ -48,7 +48,7 @@ func getZabbixURL() string {
 var ZabbixURL = "" // Diisi dinamis via getZabbixURL()
 
 var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
+	Timeout: 8 * time.Second,
 }
 
 // Fungsi Helper untuk Login Otomatis ke Zabbix
@@ -214,13 +214,57 @@ func FetchAndProcessZabbixInfra() ([]byte, error) {
 
 // =====================================================================
 // 2. GET ZABBIX INFRA (HTTP ENDPOINT)
-// Endpoint untuk mengambil Lokasi Mikrotik & OLT dari frontend
+// Endpoint untuk mengambil Lokasi Mikrotik & OLT dari frontend.
+// Jika Zabbix tidak bisa diakses, fallback ke data terakhir dari DB.
 // =====================================================================
 func GetZabbixInfra(c *gin.Context) {
+	// Coba ambil dari Zabbix terlebih dahulu
 	bodyBytes, err := FetchAndProcessZabbixInfra()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err == nil {
+		c.Data(http.StatusOK, "application/json", bodyBytes)
 		return
 	}
-	c.Data(http.StatusOK, "application/json", bodyBytes)
+
+	// Zabbix tidak terjangkau — fallback ke data terakhir dari database
+	fmt.Printf("[ZABBIX] Tidak terhubung (%v), fallback ke data DB\n", err)
+
+	var infraList []models.Infra
+	if dbErr := config.DB.Find(&infraList).Error; dbErr != nil || len(infraList) == 0 {
+		// Benar-benar tidak ada data sama sekali
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"error":         "Zabbix server tidak dapat dihubungi",
+			"detail":        err.Error(),
+			"zabbix_status": "offline",
+		})
+		return
+	}
+
+	// Ada data lama di DB — format seperti response Zabbix normal
+	type hostResult struct {
+		Name       string        `json:"name"`
+		Hostid     string        `json:"hostid"`
+		Interfaces []interface{} `json:"interfaces"`
+		Inventory  struct {
+			LocationLat string `json:"location_lat"`
+			LocationLon string `json:"location_lon"`
+		} `json:"inventory"`
+	}
+	var results []hostResult
+	for _, infra := range infraList {
+		h := hostResult{}
+		h.Name = infra.Name
+		h.Hostid = infra.HostID
+		h.Inventory.LocationLat = infra.Lat
+		h.Inventory.LocationLon = infra.Lon
+		h.Interfaces = []interface{}{} // unknown, biarkan kosong
+		results = append(results, h)
+	}
+
+	fallbackResp := map[string]interface{}{
+		"jsonrpc":        "2.0",
+		"result":         results,
+		"zabbix_status":  "offline",
+		"zabbix_message": "Data dari cache database (Zabbix tidak terhubung)",
+	}
+	c.JSON(http.StatusOK, fallbackResp)
 }

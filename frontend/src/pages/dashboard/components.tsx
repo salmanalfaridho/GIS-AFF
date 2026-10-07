@@ -41,10 +41,11 @@ interface CoreProps {
   isOltDown: boolean;
   isMikrotikDown: boolean;
   infraUnreachable?: boolean;
+  zabbixOffline?: boolean;
   infras?: Infra[];
 }
-export function CoreStatusCard({ isOltDown, isMikrotikDown, infraUnreachable, infras = [] }: CoreProps) {
-  const isDegraded = infraUnreachable || isOltDown || isMikrotikDown;
+export function CoreStatusCard({ isOltDown, isMikrotikDown, infraUnreachable, zabbixOffline, infras = [] }: CoreProps) {
+  const isDegraded = infraUnreachable || zabbixOffline || isOltDown || isMikrotikDown;
   const [open, setOpen] = useState(false);
 
   return (
@@ -56,7 +57,7 @@ export function CoreStatusCard({ isOltDown, isMikrotikDown, infraUnreachable, in
             <span className={styles.cardLabel}>Core Network</span>
           </div>
           <span className={isDegraded ? styles.badgeDanger : styles.badgeSuccess}>
-            {infraUnreachable ? 'Tidak Terjangkau' : isDegraded ? 'Terganggu' : 'Nominal'}
+            {infraUnreachable ? 'Tidak Terjangkau' : zabbixOffline ? 'Monitor Offline' : isDegraded ? 'Terganggu' : 'Nominal'}
           </span>
         </div>
 
@@ -65,6 +66,12 @@ export function CoreStatusCard({ isOltDown, isMikrotikDown, infraUnreachable, in
             <div className={styles.infraErrorIcon}>⚠️</div>
             <div className={styles.infraErrorText}>Tidak dapat terhubung ke server monitoring</div>
             <div className={styles.infraErrorSub}>Status perangkat tidak diketahui — asumsikan Down</div>
+          </div>
+        ) : zabbixOffline ? (
+          <div className={styles.infraError} style={{ background: 'rgba(251,191,36,0.08)', borderColor: 'rgba(251,191,36,0.3)' }}>
+            <div className={styles.infraErrorIcon}>🟡</div>
+            <div className={styles.infraErrorText} style={{ color: '#f59e0b' }}>Server monitoring sedang offline</div>
+            <div className={styles.infraErrorSub}>Menampilkan data terakhir dari cache — status real-time tidak tersedia</div>
           </div>
         ) : (
           <div className={styles.deviceList}>
@@ -92,9 +99,11 @@ export function CoreStatusCard({ isOltDown, isMikrotikDown, infraUnreachable, in
           <span className={styles.footerHint}>
             {infraUnreachable
               ? '🔴 Server monitoring tidak merespons'
-              : isDegraded
-                ? '⚠️ Periksa koneksi backbone segera'
-                : '✓ Semua perangkat inti beroperasi normal'}
+              : zabbixOffline
+                ? '🟡 Jalankan Tunnel agar monitoring aktif kembali'
+                : isDegraded
+                  ? '⚠️ Periksa koneksi backbone segera'
+                  : '✓ Semua perangkat inti beroperasi normal'}
           </span>
         </div>
 

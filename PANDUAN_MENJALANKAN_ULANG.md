@@ -75,12 +75,23 @@ Jika menggunakan free tunnel *trycloudflare*, setiap kali tunnel dijalankan ulan
 
 ## ⚡ Cara Super Cepat (Menggunakan File Shortcut)
 
-Anda juga bisa menjalankan file otomatis yang sudah disediakan di folder projek:
-* Cukup klik dua kali (double-click) file:
-  **`start-tunnel.bat`**
-* Terminal akan otomatis membuka tunnel dan menampilkan URL publik Zabbix Anda.
+Anda bisa menjalankan file otomatis yang sudah disediakan di folder projek dengan **salah satu dari 2 cara**:
+
+1. **Cara 1 (Double-Click):**
+   Klik dua kali (double-click) file **`start-tunnel.bat`** di File Explorer.
+
+2. **Cara 2 (Via Terminal / PowerShell):**
+   Buka Terminal di folder projek, lalu ketik:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\start-zabbix-tunnel.ps1
+   ```
 
 ---
+*Script ini akan otomatis:*
+- ✅ Mengecek apakah **Docker Desktop** sudah aktif.
+- ✅ Memastikan container Zabbix (`zabbix-db`, `zabbix-server`, `zabbix-web`) berjalan.
+- ✅ Membuka **Cloudflare Tunnel** publik ke internet.
+- ✅ **Menyalin URL Zabbix API baru langsung ke Clipboard (Ctrl+V)** agar bisa langsung Anda paste di **Railway (`ZABBIX_URL`)**.
 
 ## 📋 Ringkasan Kredensial & Variabel di Railway
 
@@ -96,7 +107,7 @@ Berikut daftar lengkap variabel environment yang harus ada di **Railway Backend*
 | `HIOSO_OLT_HOST` | `fahrizal.ddns.net:9595` | IP & Port Web OLT |
 | `HIOSO_OLT_USER` | `admin` | User OLT HIOSO |
 | `HIOSO_OLT_PASS` | `kulo05` | Password OLT HIOSO |
-| `ZABBIX_URL` | `https://xxxx.trycloudflare.com/api_jsonrpc.php` | URL Tunnel Zabbix Laptop |
+| `ZABBIX_URL` | `https://xxxx.trycloudflare.com/api_jsonrpc.php  TAMBAH /api_jsonrpc.php` | URL Tunnel Zabbix Laptop |
 | `ZABBIX_USER` | `Admin` | Username Zabbix |
 | `ZABBIX_PASSWORD`| `zabbix` | Password Zabbix |
 

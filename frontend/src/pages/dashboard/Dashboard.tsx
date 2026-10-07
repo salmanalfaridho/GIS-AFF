@@ -16,7 +16,8 @@ export default function Dashboard() {
   const [odps, setOdps] = useState<Odp[]>([]);
   const [odcs, setOdcs] = useState<Odp[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [infraError, setInfraError] = useState(false);
+  const [infraError, setInfraError] = useState(false);     // Zabbix error, tidak ada data sama sekali
+  const [zabbixOffline, setZabbixOffline] = useState(false); // Zabbix offline, tapi ada data cache DB
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -27,10 +28,18 @@ export default function Dashboard() {
     Promise.all([
       fetch('/api/onu', { credentials: 'include' }).then(r => r.json()),
       fetch('/api/zabbix-infra', { credentials: 'include' })
-        .then(r => { if (!r.ok) { setInfraError(true); return { result: [] }; } return r.json(); })
+        .then(r => {
+          if (!r.ok) { setInfraError(true); return { result: [] }; }
+          return r.json();
+        })
         .catch(() => { setInfraError(true); return { result: [] }; }),
       fetch('/api/odp', { credentials: 'include' }).then(r => r.json()),
     ]).then(([onuData, infraData, odpData]) => {
+      // Deteksi apakah Zabbix offline (ada data cache) atau error total
+      if (infraData?.zabbix_status === 'offline') {
+        setZabbixOffline(true);
+      }
+
       const rawInfras = Array.isArray(infraData) ? infraData : (infraData.result || []);
       const rawOdps = Array.isArray(odpData) ? odpData : (odpData.result || []);
       const rawOnus = Array.isArray(onuData) ? onuData : (onuData.result || []);
@@ -111,6 +120,7 @@ export default function Dashboard() {
           isOltDown={isOltDown}
           isMikrotikDown={isMikrotikDown}
           infraUnreachable={infraError}
+          zabbixOffline={zabbixOffline}
           infras={infras}
         />
         <OdcStatusCard
