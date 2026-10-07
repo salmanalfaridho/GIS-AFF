@@ -498,54 +498,6 @@ export default function MapView() {
           )}
         </div>
 
-        {/* ONU Filter */}
-        <div style={{
-          background: 'rgba(255,255,255,0.95)', padding: '10px 12px', borderRadius: 10,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: '1px solid #e5e7eb',
-          fontFamily: "'Plus Jakarta Sans',sans-serif", display: 'flex', flexDirection: 'column', gap: 8,
-          backdropFilter: 'blur(4px)', transition: 'all 0.3s ease',
-          minWidth: '200px'
-        }}>
-          <div 
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            style={{ 
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-              cursor: 'pointer', padding: '0 4px'
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Filter Kondisi ONU
-            </div>
-            <div style={{ color: '#9ca3af', fontSize: 16, lineHeight: 1 }}>
-              {isFilterOpen ? '▾' : '▸'}
-            </div>
-          </div>
-          
-          {isFilterOpen && (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-start', marginTop: 4 }}>
-              {(['all', 'ok', 'warning', 'critical', 'disconnected'] as const).map(f => {
-                const labels = { all: 'Semua', ok: 'Aman', warning: 'Warning', critical: 'Kritis', disconnected: 'Terputus' };
-                const colors = { all: '#4b5563', ok: '#16a34a', warning: '#d97706', critical: '#ef4444', disconnected: '#b91c1c' };
-                const bgColors = { all: '#f3f4f6', ok: '#f0fdf4', warning: '#fffbeb', critical: '#fef2f2', disconnected: '#fee2e2' };
-                const active = onuFilter === f;
-                return (
-                  <button
-                    key={f}
-                    onClick={() => setOnuFilter(f)}
-                    style={{
-                      padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
-                      background: active ? colors[f] : bgColors[f],
-                      color: active ? 'white' : colors[f],
-                      border: `1px solid ${active ? colors[f] : '#e5e7eb'}`, transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {labels[f]}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── Overlay Right: Topology Summary & Layer Controls ───── */}
