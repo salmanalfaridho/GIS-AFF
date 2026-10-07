@@ -907,12 +907,12 @@ export default function MapView() {
           <Marker
             key={`odc-${odc.id}`}
             position={[parseFloat(odc.latitude), parseFloat(odc.longitude)]}
-            icon={createIcon(<OdcIcon full={false} />, [36, 36])} 
+            icon={createIcon(<OdcIcon full={false} />, [38, 38])} 
           >
             <Popup>
               <InfoCard>
                 <div style={pp.head}>
-                  <div style={{ ...pp.icon, background: '#EDE9FE' }}>🔀</div>
+                  <div style={{ ...pp.icon, background: '#EDE9FE' }}>🗄️</div>
                   <div>
                     <div style={pp.name}>{odc.name}</div>
                     <div style={pp.sub}>Optical Distribution Cabinet</div>
@@ -946,7 +946,7 @@ export default function MapView() {
             <Marker
               key={`odp-${odp.id}`}
               position={[parseFloat(odp.latitude), parseFloat(odp.longitude)]}
-              icon={createIcon(<OdpIcon level={level} />, [32, 32])}
+              icon={createIcon(<OdpIcon level={level} />, [34, 34])}
             >
               <Popup>
                 <InfoCard>
@@ -955,7 +955,7 @@ export default function MapView() {
                       ...pp.icon,
                       background: level === 'full' ? '#FFF1F2' : level === 'warn' ? '#FFF7ED' : '#F0FDF4',
                     }}>
-                      🔌
+                      📦
                     </div>
                     <div>
                       <div style={pp.name}>{odp.name}</div>
@@ -1046,7 +1046,7 @@ export default function MapView() {
             <Marker
               key={`onu-${onu.id}`}
               position={[parseFloat(onu.latitude), parseFloat(onu.longitude)]}
-              icon={createIcon(<OnuIcon level={level} />, [28, 28])}
+              icon={createIcon(<OnuIcon level={level} />, [32, 32])}
             >
               <Popup>
                 <InfoCard>

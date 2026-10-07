@@ -34,12 +34,13 @@ export interface Infra {
   inventory: { location_lat: string; location_lon: string };
 }
 
-// ── Wrapper bulat ─────────────────────────────────────────────
+// ── Wrapper bulat / rounded ──────────────────────────────────
 interface IconWrapProps {
   size?: number;
   pulse?: boolean;
-  rounded?: boolean; // false = pakai border-radius 8px (untuk ODC)
+  rounded?: boolean; // false = pakai border-radius 9px (untuk ODC)
   borderColor?: string;
+  shadowColor?: string;
   children: React.ReactNode;
 }
 
@@ -48,22 +49,25 @@ export function IconWrap({
   pulse = false,
   rounded = true,
   borderColor = '#e4e7ef',
+  shadowColor = 'rgba(0,0,0,0.14)',
   children,
 }: IconWrapProps) {
-  const radius = rounded ? '50%' : '8px';
+  const radius = rounded ? '50%' : '9px';
   return (
-    <div style={{ position: 'relative', width: size, height: size }}>
+    <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {pulse && (
         <>
           <span style={{
-            position: 'absolute', inset: -7, borderRadius: '50%',
+            position: 'absolute', inset: -6, borderRadius: radius,
             border: '2.5px solid #ef4444', opacity: 0,
             animation: 'mapPulse 1.5s ease-out infinite',
+            pointerEvents: 'none',
           }} />
           <span style={{
-            position: 'absolute', inset: -7, borderRadius: '50%',
+            position: 'absolute', inset: -6, borderRadius: radius,
             border: '2.5px solid #ef4444', opacity: 0,
             animation: 'mapPulse 1.5s ease-out .5s infinite',
+            pointerEvents: 'none',
           }} />
         </>
       )}
@@ -71,13 +75,14 @@ export function IconWrap({
         width: size,
         height: size,
         borderRadius: radius,
-        background: '#fff',
-        border: `1.5px solid ${borderColor}`,
-        boxShadow: '0 1px 6px rgba(0,0,0,.12)',
+        background: '#ffffff',
+        border: `2px solid ${borderColor}`,
+        boxShadow: `0 3px 8px ${shadowColor}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        boxSizing: 'border-box',
       }}>
         {children}
       </div>
@@ -85,121 +90,172 @@ export function IconWrap({
   );
 }
 
-// ── OLT icon ──────────────────────────────────────────────────
+// ── OLT icon (Optical Line Terminal - Rackmount Chassis) ───────
 export function OltIcon({ down }: { down: boolean }) {
   const c = down
-    ? { bg: '#FCEBEB', stroke: '#E24B4A', port1: '#E24B4A', port2: '#F09595', port3: '#FCEBEB', portBorder: '#F09595', fiber1: '#E24B4A', fiber2: '#F09595', fiber3: '#F7C1C1', uplink: '#E24B4A', led: '#E24B4A', border: '#F7C1C1' }
-    : { bg: '#E6F1FB', stroke: '#378ADD', port1: '#378ADD', port2: '#85B7EB', port3: '#E6F1FB', portBorder: '#B5D4F4', fiber1: '#378ADD', fiber2: '#85B7EB', fiber3: '#B5D4F4', uplink: '#378ADD', led: '#16a34a', border: '#B5D4F4' };
+    ? { bg: '#FEF2F2', stroke: '#EF4444', main: '#DC2626', sub: '#FCA5A5', led: '#EF4444', border: '#F87171' }
+    : { bg: '#EFF6FF', stroke: '#2563EB', main: '#1D4ED8', sub: '#93C5FD', led: '#10B981', border: '#60A5FA' };
 
   return (
-    <IconWrap size={40} pulse={down} borderColor={c.border}>
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <rect x="2" y="7" width="22" height="13" rx="2.5" fill={c.bg} stroke={c.stroke} strokeWidth="1.4" />
-        <rect x="4" y="10" width="4" height="3" rx=".8" fill={c.port1} />
-        <rect x="9.5" y="10" width="4" height="3" rx=".8" fill={c.port2} />
-        <rect x="15" y="10" width="4" height="3" rx=".8" fill={c.port3} stroke={c.portBorder} strokeWidth="1" />
-        <line x1="6" y1="13" x2="6" y2="18" stroke={c.fiber1} strokeWidth="1.2" strokeLinecap="round" strokeDasharray={down ? '2 1.5' : undefined} />
-        <line x1="11.5" y1="13" x2="11.5" y2="18" stroke={c.fiber2} strokeWidth="1.2" strokeLinecap="round" strokeDasharray={down ? '2 1.5' : undefined} />
-        <line x1="17" y1="13" x2="17" y2="18" stroke={c.fiber3} strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2 1.5" />
-        <rect x="9" y="4" width="8" height="3" rx=".8" fill={c.uplink} opacity=".5" />
-        <circle cx="22" cy="9" r="1.3" fill={c.led} />
+    <IconWrap size={40} pulse={down} borderColor={c.border} rounded={false}>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        {/* Rackmount Main Chassis */}
+        <rect x="2" y="7" width="24" height="14" rx="2" fill={c.bg} stroke={c.stroke} strokeWidth="1.5" />
+        {/* Rack Ear Mounts */}
+        <line x1="2" y1="9" x2="2" y2="19" stroke={c.stroke} strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="26" y1="9" x2="26" y2="19" stroke={c.stroke} strokeWidth="2.5" strokeLinecap="round" />
+        {/* PON Slot Modules */}
+        <rect x="5.5" y="10" width="4.5" height="4" rx="0.8" fill={c.main} />
+        <rect x="11.5" y="10" width="4.5" height="4" rx="0.8" fill={c.main} />
+        <rect x="17.5" y="10" width="4.5" height="4" rx="0.8" fill={c.sub} />
+        {/* Fiber Feed Lines */}
+        <line x1="7.7" y1="14" x2="7.7" y2="19" stroke={c.main} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="13.7" y1="14" x2="13.7" y2="19" stroke={c.main} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="19.7" y1="14" x2="19.7" y2="19" stroke={c.sub} strokeWidth="1.2" strokeLinecap="round" strokeDasharray="1.5 1.5" />
+        {/* Status LED */}
+        <circle cx="23.5" cy="10" r="1.5" fill={c.led} />
       </svg>
     </IconWrap>
   );
 }
 
-// ── MikroTik icon ─────────────────────────────────────────────
+// ── MikroTik icon (Core Router with Antennas & Ethernet Ports) ──
 export function MikrotikIcon({ down }: { down: boolean }) {
   const c = down
-    ? { bg: '#FCEBEB', stroke: '#E24B4A', p1: '#E24B4A', p2: '#F09595', p3: '#FCEBEB', pBorder: '#F09595', ant: '#E24B4A', antDash: '2 1.5', led: '#E24B4A', border: '#F7C1C1' }
-    : { bg: '#EEEDFE', stroke: '#7F77DD', p1: '#7F77DD', p2: '#AFA9EC', p3: '#EEEDFE', pBorder: '#CECBF6', ant: '#7F77DD', antDash: undefined, led: '#16a34a', border: '#CECBF6' };
+    ? { bg: '#FEF2F2', stroke: '#EF4444', p: '#DC2626', led: '#EF4444', border: '#F87171' }
+    : { bg: '#F5F3FF', stroke: '#7C3AED', p: '#6D28D9', led: '#10B981', border: '#A78BFA' };
 
   return (
-    <IconWrap size={40} pulse={down} borderColor={c.border}>
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <rect x="2" y="9" width="22" height="10" rx="2.5" fill={c.bg} stroke={c.stroke} strokeWidth="1.4" />
-        <rect x="4.5" y="11.5" width="3.5" height="5" rx="1" fill={c.p1} />
-        <rect x="10" y="11.5" width="3.5" height="5" rx="1" fill={c.p2} />
-        <rect x="15.5" y="11.5" width="3.5" height="5" rx="1" fill={c.p3} stroke={c.pBorder} strokeWidth="1" />
-        <line x1="6.5" y1="9" x2="6.5" y2="5" stroke={c.ant} strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="13" y1="9" x2="13" y2="5" stroke={c.ant} strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="19.5" y1="9" x2="19.5" y2="5" stroke={c.ant} strokeWidth="1.4" strokeLinecap="round" strokeDasharray={c.antDash} />
-        <circle cx="21.5" cy="12.5" r="1.2" fill={c.led} />
-        {down && (
-          <>
-            <line x1="19" y1="3" x2="21.5" y2="5.5" stroke="#E24B4A" strokeWidth="1.3" strokeLinecap="round" />
-            <line x1="21.5" y1="3" x2="19" y2="5.5" stroke="#E24B4A" strokeWidth="1.3" strokeLinecap="round" />
-          </>
-        )}
+    <IconWrap size={40} pulse={down} borderColor={c.border} rounded={false}>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        {/* Antennas */}
+        <line x1="7" y1="9" x2="7" y2="4" stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="14" y1="9" x2="14" y2="3.5" stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="21" y1="9" x2="21" y2="4" stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round" />
+        {/* Router Body */}
+        <rect x="3" y="9" width="22" height="13" rx="2.5" fill={c.bg} stroke={c.stroke} strokeWidth="1.5" />
+        {/* Ethernet Ports */}
+        <rect x="5.5" y="13" width="3.5" height="5" rx="0.8" fill={c.p} />
+        <rect x="10.5" y="13" width="3.5" height="5" rx="0.8" fill={c.p} />
+        <rect x="15.5" y="13" width="3.5" height="5" rx="0.8" fill={c.p} />
+        {/* Status LED */}
+        <circle cx="21.5" cy="13.5" r="1.3" fill={c.led} />
+        {/* Activity Dot */}
+        <circle cx="21.5" cy="17.5" r="1" fill={c.stroke} opacity="0.6" />
       </svg>
     </IconWrap>
   );
 }
 
-// ── ODC icon ─────────────────────────────────────────────────
+// ── ODC icon (Optical Distribution Cabinet - Outdoor Lemari ODC) ──
 export function OdcIcon({ full }: { full: boolean }) {
   const c = full
-    ? { bg: '#FAEEDA', stroke: '#EF9F27', slot: '#EF9F27', fiber: '#EF9F27', lock: '#EF9F27', border: '#FAC775' }
-    : { bg: '#E1F5EE', stroke: '#1D9E75', slot: '#1D9E75', fiber: '#1D9E75', lock: '#1D9E75', border: '#9FE1CB' };
+    ? { bg: '#FFFBEB', stroke: '#D97706', accent: '#B45309', tray: '#F59E0B', border: '#FBBF24' }
+    : { bg: '#F5F3FF', stroke: '#6D28D9', accent: '#4C1D95', tray: '#8B5CF6', border: '#A78BFA' };
 
   return (
-    <IconWrap size={38} pulse={false} rounded={false} borderColor={c.border}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="2" width="18" height="20" rx="2" fill={c.bg} stroke={c.stroke} strokeWidth="1.4" />
-        <line x1="12" y1="2" x2="12" y2="22" stroke={c.border} strokeWidth="1" />
-        <rect x="4.5" y="5" width="6.5" height="2" rx=".5" fill={c.slot} opacity=".8" />
-        <rect x="4.5" y="8.5" width="6.5" height="2" rx=".5" fill={c.slot} opacity=".55" />
-        <rect x="4.5" y="12" width="6.5" height="2" rx=".5" fill={c.slot} opacity=".3" />
-        <line x1="13" y1="6" x2="20" y2="6" stroke={c.fiber} strokeWidth="1.1" strokeLinecap="round" />
-        <line x1="13" y1="9.5" x2="20" y2="9.5" stroke={c.fiber} strokeWidth="1.1" strokeLinecap="round" opacity=".7" />
-        <line x1="13" y1="13" x2="20" y2="13" stroke={c.fiber} strokeWidth="1.1" strokeLinecap="round" opacity=".4" />
-        <circle cx="12" cy="17" r="1.5" fill={c.lock} opacity=".6" />
+    <IconWrap size={38} pulse={false} rounded={false} borderColor={c.border} shadowColor="rgba(109, 40, 217, 0.25)">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        {/* Outdoor Canopy Roof */}
+        <path d="M2.5 5.5 L13 2.5 L23.5 5.5 L22.5 7 L3.5 7 Z" fill={c.stroke} />
+        
+        {/* Main Cabinet Enclosure */}
+        <rect x="3.5" y="7" width="19" height="16" rx="1.5" fill={c.bg} stroke={c.stroke} strokeWidth="1.4" />
+        
+        {/* Center Door Splitter Line */}
+        <line x1="13" y1="7" x2="13" y2="23" stroke={c.stroke} strokeWidth="1.2" />
+        
+        {/* Left Door - Splice Tray Cassette Rows */}
+        <rect x="5.5" y="9.5" width="5.5" height="2" rx="0.5" fill={c.tray} />
+        <rect x="5.5" y="12.5" width="5.5" height="2" rx="0.5" fill={c.tray} />
+        <rect x="5.5" y="15.5" width="5.5" height="2" rx="0.5" fill={c.tray} />
+        
+        {/* Right Door - Optical Distribution Patch & Keyhole */}
+        <circle cx="16" cy="10.5" r="1" fill={c.accent} />
+        <circle cx="19" cy="10.5" r="1" fill={c.accent} />
+        <circle cx="16" cy="13.5" r="1" fill={c.accent} />
+        <circle cx="19" cy="13.5" r="1" fill={c.accent} />
+        
+        {/* Door Handles / Lock */}
+        <rect x="11.8" y="17" width="2.4" height="3" rx="0.6" fill={c.accent} />
+        
+        {/* Cabinet Bottom Plinth */}
+        <rect x="5" y="23" width="16" height="1.5" fill={c.stroke} />
       </svg>
     </IconWrap>
   );
 }
 
-// ── ODP icon ─────────────────────────────────────────────────
+// ── ODP icon (Optical Distribution Point - Kotak ODP Tiang / Pole Box) ──
 export function OdpIcon({ level }: { level: 'ok' | 'warn' | 'full' }) {
   const c = level === 'full'
-    ? { bg: '#FCEBEB', stroke: '#E24B4A', p1: '#E24B4A', p2: '#E24B4A', p3op: '.8', cable: '#E24B4A', led: '#E24B4A', border: '#F7C1C1' }
+    ? { bg: '#FEF2F2', stroke: '#DC2626', split: '#EF4444', led: '#DC2626', border: '#F87171' }
     : level === 'warn'
-    ? { bg: '#FAEEDA', stroke: '#EF9F27', p1: '#EF9F27', p2: '#EF9F27', p3op: '.5', cable: '#EF9F27', led: '#EF9F27', border: '#FAC775' }
-    : { bg: '#E1F5EE', stroke: '#1D9E75', p1: '#1D9E75', p2: '#1D9E75', p3op: '.2', cable: '#1D9E75', led: '#16a34a', border: '#9FE1CB' };
+    ? { bg: '#FFFBEB', stroke: '#D97706', split: '#F59E0B', led: '#D97706', border: '#FBBF24' }
+    : { bg: '#ECFDF5', stroke: '#059669', split: '#10B981', led: '#059669', border: '#34D399' };
 
   return (
-    <IconWrap size={34} pulse={false} borderColor={c.border}>
+    <IconWrap size={34} pulse={false} rounded={true} borderColor={c.border} shadowColor="rgba(5, 150, 105, 0.22)">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <rect x="2" y="5" width="18" height="12" rx="2" fill={c.bg} stroke={c.stroke} strokeWidth="1.3" />
-        <circle cx="6" cy="11" r="1.4" fill={c.p1} />
-        <circle cx="11" cy="11" r="1.4" fill={c.p2} opacity=".6" />
-        <circle cx="16" cy="11" r="1.4" fill={c.bg} stroke={c.border} strokeWidth="1" opacity={c.p3op} />
-        <rect x="8.5" y="2.5" width="5" height="2.5" rx=".7" fill={c.cable} opacity=".5" />
-        <circle cx="17.5" cy="6.5" r="1.2" fill={c.led} />
+        {/* Pole Mount Top Ear */}
+        <rect x="8" y="1" width="6" height="2" rx="0.8" fill={c.stroke} />
+        
+        {/* ODP Terminal Box Body */}
+        <rect x="2.5" y="3" width="17" height="15" rx="2.5" fill={c.bg} stroke={c.stroke} strokeWidth="1.4" />
+        
+        {/* Optical Splitter Core Graphic: 1 Feeder to 6 Drop Ports */}
+        <circle cx="11" cy="6.5" r="1.5" fill={c.stroke} />
+        
+        {/* Splitter Branches */}
+        <path d="M7 11 L11 7.5 L15 11" stroke={c.split} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+        
+        {/* Output Drop Adapter Ports */}
+        <circle cx="6.5" cy="11.5" r="1.1" fill={c.split} />
+        <circle cx="9.5" cy="11.5" r="1.1" fill={c.split} />
+        <circle cx="12.5" cy="11.5" r="1.1" fill={c.split} />
+        <circle cx="15.5" cy="11.5" r="1.1" fill={c.split} />
+        
+        {/* Bottom Drop Cable Glands */}
+        <rect x="5.5" y="18" width="2" height="2.5" rx="0.5" fill={c.stroke} />
+        <rect x="8.5" y="18" width="2" height="2.5" rx="0.5" fill={c.stroke} />
+        <rect x="11.5" y="18" width="2" height="2.5" rx="0.5" fill={c.stroke} />
+        <rect x="14.5" y="18" width="2" height="2.5" rx="0.5" fill={c.stroke} />
+        
+        {/* Active Power LED */}
+        <circle cx="17.5" cy="5" r="0.9" fill={c.led} />
       </svg>
     </IconWrap>
   );
 }
 
-// ── ONU icon ─────────────────────────────────────────────────
+// ── ONU / Client icon (Rumah Pelanggan FTTH & ONT WiFi) ────────
 export function OnuIcon({ level }: { level: 'ok' | 'warning' | 'critical' }) {
   const c =
     level === 'ok'
-      ? { bg: '#EAF3DE', stroke: '#639922', arc1: '#639922', arc2: '#639922', arc1dash: undefined, arc2dash: undefined, dot: '#639922', cable: '#639922', led1: '#639922', led2op: '.5', border: '#C0DD97' }
+      ? { bg: '#F0FDF4', stroke: '#16A34A', fill: '#22C55E', signal: '#16A34A', border: '#4ADE80' }
       : level === 'warning'
-      ? { bg: '#FAEEDA', stroke: '#EF9F27', arc1: '#EF9F27', arc2: '#EF9F27', arc1dash: undefined, arc2dash: '1.5 1', dot: '#EF9F27', cable: '#EF9F27', led1: '#EF9F27', led2op: '0', border: '#FAC775' }
-      : { bg: '#FCEBEB', stroke: '#E24B4A', arc1: '#F09595', arc2: '#E24B4A', arc1dash: '2 1.2', arc2dash: '1.5 1', dot: '#E24B4A', cable: '#E24B4A', led1: '#E24B4A', led2op: '0', border: '#F7C1C1' };
+      ? { bg: '#FFFBEB', stroke: '#D97706', fill: '#F59E0B', signal: '#D97706', border: '#FBBF24' }
+      : { bg: '#FEF2F2', stroke: '#DC2626', fill: '#EF4444', signal: '#DC2626', border: '#F87171' };
 
   return (
-    <IconWrap size={30} pulse={level === 'critical'} borderColor={c.border}>
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="6" width="16" height="9" rx="2" fill={c.bg} stroke={c.stroke} strokeWidth="1.2" />
-        <path d="M7 9.5 Q10 6.5 13 9.5" stroke={c.arc1} strokeWidth="1.2" fill="none" strokeLinecap="round" strokeDasharray={c.arc1dash} />
-        <path d="M8.5 11 Q10 9.5 11.5 11" stroke={c.arc2} strokeWidth="1.2" fill="none" strokeLinecap="round" strokeDasharray={c.arc2dash} />
-        <circle cx="10" cy="12.5" r="1" fill={c.dot} />
-        <line x1="10" y1="15" x2="10" y2="17.5" stroke={c.cable} strokeWidth="1.1" strokeLinecap="round" />
-        <circle cx="4" cy="8" r=".8" fill={c.led1} />
-        <circle cx="6" cy="8" r=".8" fill={c.led1} opacity={c.led2op} />
+    <IconWrap size={32} pulse={level === 'critical'} rounded={true} borderColor={c.border} shadowColor="rgba(22, 163, 74, 0.22)">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        {/* Customer House Roof (Atap Rumah Pelanggan) */}
+        <path d="M3 11 L11 4 L19 11" stroke={c.stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        
+        {/* Customer House Body (Dinding Rumah) */}
+        <rect x="5.5" y="10.5" width="11" height="8.5" rx="1" fill={c.bg} stroke={c.stroke} strokeWidth="1.3" />
+        
+        {/* Inside: ONT Device with WiFi Signals (ONT Pelanggan di Dalam Rumah) */}
+        {/* WiFi Signal Arcs */}
+        <path d="M8.5 12.5 Q11 10.5 13.5 12.5" stroke={c.signal} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+        <path d="M9.5 14 Q11 12.5 12.5 14" stroke={c.signal} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+        
+        {/* ONT Modem Box / Fiber Connection Dot */}
+        <rect x="8.5" y="15.5" width="5" height="2" rx="0.5" fill={c.fill} />
+        
+        {/* Fiber Drop Ingress Indicator Dot at bottom */}
+        <circle cx="11" cy="18.5" r="0.8" fill={c.stroke} />
       </svg>
     </IconWrap>
   );
